@@ -1,0 +1,19 @@
+# Include variables for this build
+include ./build/Release/varsx64.ninja
+
+## for getting object files
+## This also gets dependencies
+rule buildToObject
+   command = $compiler $compilerFlags $inc $in -o $out -MMD -MF $out.d
+   depfile = $out.d
+   deps = gcc
+
+## build all of the objects and the executable
+build $objDir/File.o: buildToObject src/File.cpp
+build $objDir/Game.o: buildToObject src/Game.cpp
+build $objDir/Image.o: buildToObject src/Image.cpp
+build $objDir/Input.o: buildToObject src/Input.cpp
+build $objDir/Mat3f.o: buildToObject src/Mat3f.cpp
+build $objDir/source.o: buildToObject src/source.cpp
+build $objDir/System.o: buildToObject src/System.cpp
+build $objDir/Window.o: buildToObject src/Window.cpp
