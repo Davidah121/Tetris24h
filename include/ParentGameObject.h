@@ -3,9 +3,9 @@
 class ParentGameObject
 {
 public:
-    virtual void update();
-    virtual void render();
+    virtual void update(){}
+    virtual void render(){}
 
     int depth = 0;
-    bool visible = false;
+    bool visible = true;
 };

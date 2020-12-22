@@ -18,6 +18,11 @@ public:
     void removeGameObject(ParentGameObject* obj);
 
     void closeGame();
+
+    static Game* getCurrentGame();
+
+    Image* getGameImg();
+    
 private:
     int currentFPS;
     int targetFPS;
@@ -30,7 +35,8 @@ private:
 
     Window* wnd;
 
-    Image gameImg;
+    Image* gameImg;
 
     std::vector<ParentGameObject*> gameObjects;
+    static Game* currentGame;
 };

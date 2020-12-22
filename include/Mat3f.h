@@ -16,6 +16,7 @@ public:
 
     static Mat3f getIdentity();
     static Mat3f getRotationMatrix(double degs);
+    static Mat3f getRotationMatrix(double degs, double x, double y);
     static Mat3f getTranslationMatrix(double x, double y);
     static Mat3f getScaleMatrix(double x, double y);
 

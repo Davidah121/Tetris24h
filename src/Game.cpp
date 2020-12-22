@@ -1,18 +1,38 @@
 #include "Game.h"
 
+Game* Game::currentGame = nullptr;
 Game::Game()
 {
-    wnd = new Window(320, 240, "TETRIS_24HR");
+    wnd = new Window(640, 480, "TETRIS_24HR");
     currentFPS = 0;
     targetFPS = 60;
-    gameImg = Image(320, 240);
+    gameImg = new Image(640, 480);
     gameObjects = std::vector<ParentGameObject*>();
+    currentGame = this;
+    running = true;
+
+    Input::init();
+    wnd->setKeyboardDownFunction(Input::setKeyDownFunction);
+    wnd->setKeyboardUpFunction(Input::setKeyUpFunction);
 }
 
 Game::~Game()
 {
+    std::cout << "CLOSED GAME" << std::endl;
     if(wnd!=nullptr)
         delete wnd;
+    if(gameImg!=nullptr)
+        delete gameImg;
+}
+
+Game* Game::getCurrentGame()
+{
+    return Game::currentGame;
+}
+
+Image* Game::getGameImg()
+{
+    return gameImg;
 }
 
 void Game::run()
@@ -23,15 +43,20 @@ void Game::run()
     while(running)
     {
         unsigned long startTime = System::getNanoTime();
-        Input::update();
         update();
         sort();
         render();
+        Input::update();
 
         if(wnd->getRunning())
-            wnd->render(&gameImg);
+        {
+            wnd->render(gameImg);
+        }
         else
-            running = false;
+        {
+            closeGame();
+            break;
+        }
         
         unsigned long endTime = System::getNanoTime();
         while( (endTime - startTime) < targetTime)
@@ -48,8 +73,13 @@ void Game::run()
         if(totalTime > SecondInNanos)
         {
             currentFPS = tempFPS;
+            tempFPS = 0;
             totalTime = 0;
+            std::cout << "FPS: " << currentFPS << std::endl;
         }
+
+        if(Input::getKeyDown('Q'))
+            closeGame();
     }
 }
 
@@ -102,6 +132,7 @@ void Game::update()
 
 void Game::render()
 {
+    gameImg->clearImage({255,255,255,255});
     for(int i=0; i<gameObjects.size(); i++)
     {
         if(gameObjects[i]->visible)

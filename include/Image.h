@@ -28,7 +28,7 @@ public:
 
     //draw functions
     void clearImage(Color c);
-    void drawRect(int x, int y, int width, int height, Color c);
+    void drawRect(int x, int y, int width, int height, bool outline, Color c);
     void drawLine(int x1, int y1, int x2, int y2, Color c);
     void drawLineExt(int x1, int y1, int x2, int y2, Color startC, Color endC);
     void drawImage(int x, int y, Image* o);

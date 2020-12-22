@@ -2,6 +2,8 @@
 #include "Window.h"
 #include "Input.h"
 #include "System.h"
+#include "Game.h"
+#include "GlobalController.h"
 
 void testWindow()
 {
@@ -41,10 +43,17 @@ void testWindow()
     system("pause");
 }
 
+void startGame()
+{
+    Game g = Game();
+    g.addGameObject(new GlobalController(1, 0));
+    g.run();
+}
+
 int main()
 {
-    testWindow();
+    //testWindow();
+    startGame();
     std::cout<<"Hello world" << std::endl;
-    system("pause");
     return 0;
 }

@@ -193,20 +193,30 @@ void Image::drawPixelSimple(int x, int y, Color c)
     setPixel(x,y,c1);
 }
 
-void Image::drawRect(int x, int y, int width, int height, Color c)
+void Image::drawRect(int x, int y, int width, int height, bool outline, Color c)
 {
-    int endX = System::clamp<int>(width, 0, this->width);
-    int endY = System::clamp<int>(height, 0, this->height);
+    int endX = System::clamp<int>(x+width, 0, this->width);
+    int endY = System::clamp<int>(y+height, 0, this->height);
 
     int startX = System::clamp<int>(x, 0, this->width);
     int startY = System::clamp<int>(y, 0, this->height);
 
-    for(int i2=startY; i2<endY; i2++)
+    if(outline==false)
     {
-        for(int i=startX; i<endX; i++)
+        for(int i2=startY; i2<endY; i2++)
         {
-            drawPixelSimple(i, i2, c);
+            for(int i=startX; i<endX; i++)
+            {
+                drawPixelSimple(i, i2, c);
+            }
         }
+    }
+    else
+    {
+        drawLine(startX, startY, endX, startY, c);
+        drawLine(startX, endY, endX, endY, c);
+        drawLine(startX, startY, startX, endY, c);
+        drawLine(endX, startY, endX, endY, c);
     }
 }
 

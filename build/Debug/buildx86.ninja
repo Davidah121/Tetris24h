@@ -16,4 +16,5 @@ build $objDir/Input.o: buildToObject src/Input.cpp
 build $objDir/Mat3f.o: buildToObject src/Mat3f.cpp
 build $objDir/source.o: buildToObject src/source.cpp
 build $objDir/System.o: buildToObject src/System.cpp
+build $objDir/TetrisBlock.o: buildToObject src/TetrisBlock.cpp
 build $objDir/Window.o: buildToObject src/Window.cpp
