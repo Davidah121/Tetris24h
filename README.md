@@ -19,5 +19,7 @@ The tools used are as follows.<br>
   <li>Clang</li>
   <li>Ninja</li>
   <li>Windows Alarm Clock app</li>
+  <li>Live Split</li>
+  <li>Mixcraft 8 Pro Studio</li>
 </ul>
 </p>
