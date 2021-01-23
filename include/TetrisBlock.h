@@ -33,6 +33,7 @@ public:
     void rotateClockwise();
     void rotateCounterClockwise();
 
+    void moveUp();
     void moveDown();
     void moveLeft();
     void moveRight();
@@ -42,6 +43,12 @@ public:
     int getX();
     int getY();
 
+    void setX(int x);
+    void setY(int y);
+
+    void setRenderStartX(int value);
+    void setRenderStartY(int value);
+
     Image* getImagePointer();
 private:
     bool blockArray[16];
@@ -49,8 +56,11 @@ private:
     int x = 0;
     int y = 0;
 
+    int renderX = 0;
+    int renderY = 0;
+
     Vec2f axisOffset = Vec2f(-0.5,-0.5);
     Vec2f axisOfRotation = Vec2f(1.5, 1.5);
 
-    Image* img;
+    Image* img = nullptr;
 };

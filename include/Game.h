@@ -19,6 +19,8 @@ public:
 
     void closeGame();
 
+    void clear();
+
     static Game* getCurrentGame();
 
     Image* getGameImg();
@@ -33,9 +35,9 @@ private:
     void render();
     void sort();
 
-    Window* wnd;
+    Window* wnd = nullptr;
 
-    Image* gameImg;
+    Image* gameImg = nullptr;
 
     std::vector<ParentGameObject*> gameObjects;
     static Game* currentGame;

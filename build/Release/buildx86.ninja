@@ -9,12 +9,19 @@ rule buildToObject
    deps = gcc
 
 ## build all of the objects and the executable
+build $objDir/AssetManager.o: buildToObject src/AssetManager.cpp
+build $objDir/Audio.o: buildToObject src/Audio.cpp
 build $objDir/File.o: buildToObject src/File.cpp
 build $objDir/Game.o: buildToObject src/Game.cpp
+build $objDir/GlobalController.o: buildToObject src/GlobalController.cpp
 build $objDir/Image.o: buildToObject src/Image.cpp
 build $objDir/Input.o: buildToObject src/Input.cpp
+build $objDir/LCG.o: buildToObject src/LCG.cpp
 build $objDir/Mat3f.o: buildToObject src/Mat3f.cpp
+build $objDir/MenuController.o: buildToObject src/MenuController.cpp
+build $objDir/Player.o: buildToObject src/Player.cpp
 build $objDir/source.o: buildToObject src/source.cpp
 build $objDir/System.o: buildToObject src/System.cpp
 build $objDir/TetrisBlock.o: buildToObject src/TetrisBlock.cpp
+build $objDir/TetrisBoard.o: buildToObject src/TetrisBoard.cpp
 build $objDir/Window.o: buildToObject src/Window.cpp

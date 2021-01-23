@@ -81,6 +81,11 @@ TetrisBlock::TetrisBlock(unsigned char type) : ParentGameObject()
     }
 }
 
+TetrisBlock::~TetrisBlock()
+{
+
+}
+
 void TetrisBlock::rotateClockwise()
 {
     Vec2f finalAxis = axisOfRotation + axisOffset;
@@ -140,6 +145,11 @@ void TetrisBlock::update()
 {
 }
 
+void TetrisBlock::moveUp()
+{
+    y -= 16;
+}
+
 void TetrisBlock::moveDown()
 {
     y += 16;
@@ -167,7 +177,7 @@ void TetrisBlock::render()
         if(blockArray[i])
         {
             //gameScreen->drawRect(x + 16*(i%4), y + 16*(i/4), 16, 16, false, c);
-            gameScreen->drawImage(x + 16*(i%4), y + 16*(i/4), this->img);
+            gameScreen->drawImage(renderX + x + 16*(i%4), renderY + y + 16*(i/4), this->img);
         }
     }
 
@@ -183,7 +193,32 @@ int TetrisBlock::getY()
     return y;
 }
 
+void TetrisBlock::setX(int x)
+{
+    this->x = x;
+}
+
+void TetrisBlock::setY(int y)
+{
+    this->y = y;
+}
+
+void TetrisBlock::setRenderStartX(int v)
+{
+    renderX = v;
+}
+
+void TetrisBlock::setRenderStartY(int v)
+{
+    renderY = v;
+}
+
 Image* TetrisBlock::getImagePointer()
 {
     return img;
+}
+
+bool* TetrisBlock::getBlockArray()
+{
+    return blockArray;
 }

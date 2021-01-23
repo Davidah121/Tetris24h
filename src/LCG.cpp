@@ -17,6 +17,22 @@ LCG::LCG(unsigned long a, unsigned long b, unsigned long c, unsigned long d)
         mod = 1;
 }
 
+LCG::LCG(const LCG& o)
+{
+    seed = o.seed;
+    mult = o.mult;
+    inc = o.inc;
+    mod = o.mod;
+}
+
+void LCG::operator=(const LCG& o)
+{
+    seed = o.seed;
+    mult = o.mult;
+    inc = o.inc;
+    mod = o.mod;
+}
+
 LCG::~LCG()
 {
     

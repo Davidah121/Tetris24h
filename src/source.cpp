@@ -4,6 +4,7 @@
 #include "System.h"
 #include "Game.h"
 #include "GlobalController.h"
+#include "MenuController.h"
 
 void testWindow()
 {
@@ -46,7 +47,7 @@ void testWindow()
 void startGame()
 {
     Game g = Game();
-    g.addGameObject(new GlobalController(1, 0));
+    g.addGameObject(new MenuController());
     g.run();
 }
 

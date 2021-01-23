@@ -169,8 +169,8 @@ void Image::drawPixelSimple(int x, int y, Color c)
 {
     Color preC1 = getPixel(x, y);
 
-    double preC1A = preC1.a / 255;
-    double c1Alpha = c.a / 255;
+    double preC1A = (double)preC1.a / 255.0;
+    double c1Alpha = (double)c.a / 255.0;
     
     double c1a,c1r,c1g,c1b;
     
@@ -178,9 +178,9 @@ void Image::drawPixelSimple(int x, int y, Color c)
     
     if(c1a!=0)
     {
-        c1r = (c.r*c1Alpha + preC1.r*preC1A*(1.0-c1Alpha))/c1a;
-        c1g = (c.g*c1Alpha + preC1.g*preC1A*(1.0-c1Alpha))/c1a;
-        c1b = (c.b*c1Alpha + preC1.b*preC1A*(1.0-c1Alpha))/c1a;
+        c1r = ((double)c.r*c1Alpha + (double)preC1.r*preC1A*(1.0-c1Alpha))/c1a;
+        c1g = ((double)c.g*c1Alpha + (double)preC1.g*preC1A*(1.0-c1Alpha))/c1a;
+        c1b = ((double)c.b*c1Alpha + (double)preC1.b*preC1A*(1.0-c1Alpha))/c1a;
     }
 
     Color c1;
@@ -356,189 +356,194 @@ void Image::drawLineExt(int x1, int y1, int x2, int y2, Color startC, Color endC
 
 void Image::drawImage(int x, int y, Image* o)
 {
-    int startX = System::clamp<int>(x, 0, this->width);
-    int startY = System::clamp<int>(y, 0, this->height);
-
-    int endX = System::clamp<int>(startX + o->width, 0, this->width);
-    int endY = System::clamp<int>(startY + o->height, 0, this->height);
-
-    int oX = 0;
-    int oY = 0;
-    for(int i2=startY, oY=0; i2<endY; i2++, oY++)
+    if(o!=nullptr)
     {
-        for(int i=startX, oX=0; i<endX; i++, oX++)
+        int startX = System::clamp<int>(x, 0, this->width);
+        int startY = System::clamp<int>(y, 0, this->height);
+
+        int endX = System::clamp<int>(startX + o->width, 0, this->width);
+        int endY = System::clamp<int>(startY + o->height, 0, this->height);
+
+        int oX = 0;
+        int oY = 0;
+        for(int i2=startY, oY=0; i2<endY; i2++, oY++)
         {
-            Color c = o->getPixel(oX, oY);
-            drawPixelSimple(i, i2, c);
+            for(int i=startX, oX=0; i<endX; i++, oX++)
+            {
+                Color c = o->getPixel(oX, oY);
+                drawPixelSimple(i, i2, c);
+            }
         }
     }
 }
 
 void Image::drawImageExt(int x, int y, double scaleX, double scaleY, double rot, double rx, double ry, Image* o)
 {
-    //different approach. apply transform first to corners and map individual pixels to where they would
-    //be on the first image with linear transformations
-    Vec3f corner1 = Vec3f(0, 0, 1);
-    Vec3f corner2 = Vec3f(o->width, 0, 1);
-    Vec3f corner3 = Vec3f(o->width, o->height, 1);
-    Vec3f corner4 = Vec3f(0, o->height, 1);
-    
-    Mat3f transformMatrix = Mat3f::getTranslationMatrix(rx, ry) * ( Mat3f::getRotationMatrix(rot) * Mat3f::getTranslationMatrix(-rx, -ry) );
-
-    transformMatrix = Mat3f::getScaleMatrix(scaleX, scaleY) * transformMatrix;
-
-    transformMatrix = Mat3f::getTranslationMatrix(x, y) * transformMatrix;
-
-    corner1 = transformMatrix * corner1;
-    corner2 = transformMatrix * corner2;
-    corner3 = transformMatrix * corner3;
-    corner4 = transformMatrix * corner4;
-
-    Vec2f p1 = Vec2f(corner1.x, corner1.y);
-    Vec2f p2 = Vec2f(corner2.x, corner2.y);
-    Vec2f p3 = Vec2f(corner3.x, corner3.y);
-    Vec2f p4 = Vec2f(corner4.x, corner4.y);
-
-    Vec2f oP1 = Vec2f(0,0);
-    Vec2f oP2 = Vec2f(o->width,0);
-    Vec2f oP3 = Vec2f(o->width,o->height);
-
-    double detT = (p2.y-p3.y)*(p1.x-p3.x) + (p3.x-p2.x)*(p1.y-p3.y);
-    
-    int oX = 0;
-    int oY = 0;
-    int oWidth = o->width;
-    int oHeight = o->height;
-
-    int minY = min(min(min(p1.y, p2.y), p3.y), p4.y);
-    int maxY = max(max(max(p1.y, p2.y), p3.y), p4.y);
-
-    Line l1 = Line(p1.x, p1.y, p2.x, p2.y);
-    Line l2 = Line(p2.x, p2.y, p3.x, p3.y);
-    Line l3 = Line(p3.x, p3.y, p4.x, p4.y);
-    Line l4 = Line(p4.x, p4.y, p1.x, p1.y);
-    
-    for(int i2=minY; i2<maxY; i2++)
+    if(o!=nullptr)
     {
-        int minX, maxX;
-        double v = 0;
+        //different approach. apply transform first to corners and map individual pixels to where they would
+        //be on the first image with linear transformations
+        Vec3f corner1 = Vec3f(0, 0, 1);
+        Vec3f corner2 = Vec3f(o->width, 0, 1);
+        Vec3f corner3 = Vec3f(o->width, o->height, 1);
+        Vec3f corner4 = Vec3f(0, o->height, 1);
+        
+        Mat3f transformMatrix = Mat3f::getTranslationMatrix(rx, ry) * ( Mat3f::getRotationMatrix(rot) * Mat3f::getTranslationMatrix(-rx, -ry) );
 
-        if(l1.getSlope() != 0)
-        {
-            v = (i2 - l1.getYInt()) / l1.getSlope();
-            minX = v;
-            maxX = v;
-        }
-        else
-        {
-            minX = l1.getMinX();
-            maxX = l1.getMaxX();
-        }
+        transformMatrix = Mat3f::getScaleMatrix(scaleX, scaleY) * transformMatrix;
 
-        if(l2.getSlope() != 0)
-        {
-            v = (i2 - l2.getYInt()) / l2.getSlope();
-            minX = min(minX, v);
-            maxX = max(maxX, v);
-        }
-        else
-        {
-            minX = min(minX,l2.getMinX());
-            maxX = max(maxX,l2.getMaxX());
-        }
+        transformMatrix = Mat3f::getTranslationMatrix(x, y) * transformMatrix;
 
-        if(l3.getSlope() != 0)
-        {
-            v = (i2 - l3.getYInt()) / l3.getSlope();
-            minX = min(minX, v);
-            maxX = max(maxX, v);
-        }
-        else
-        {
-            minX = min(minX,l3.getMinX());
-            maxX = max(maxX,l3.getMaxX());
-        }
+        corner1 = transformMatrix * corner1;
+        corner2 = transformMatrix * corner2;
+        corner3 = transformMatrix * corner3;
+        corner4 = transformMatrix * corner4;
 
-        if(l4.getSlope() != 0)
-        {
-            v = (i2 - l4.getYInt()) / l4.getSlope();
-            minX = min(minX, v);
-            maxX = max(maxX, v);
-        }
-        else
-        {
-            minX = min(minX,l4.getMinX());
-            maxX = max(maxX,l4.getMaxX());
-        }
+        Vec2f p1 = Vec2f(corner1.x, corner1.y);
+        Vec2f p2 = Vec2f(corner2.x, corner2.y);
+        Vec2f p3 = Vec2f(corner3.x, corner3.y);
+        Vec2f p4 = Vec2f(corner4.x, corner4.y);
 
-        for(int i=minX; i<=maxX; i++)
+        Vec2f oP1 = Vec2f(0,0);
+        Vec2f oP2 = Vec2f(o->width,0);
+        Vec2f oP3 = Vec2f(o->width,o->height);
+
+        double detT = (p2.y-p3.y)*(p1.x-p3.x) + (p3.x-p2.x)*(p1.y-p3.y);
+        
+        int oX = 0;
+        int oY = 0;
+        int oWidth = o->width;
+        int oHeight = o->height;
+
+        int minY = min(min(min(p1.y, p2.y), p3.y), p4.y);
+        int maxY = max(max(max(p1.y, p2.y), p3.y), p4.y);
+
+        Line l1 = Line(p1.x, p1.y, p2.x, p2.y);
+        Line l2 = Line(p2.x, p2.y, p3.x, p3.y);
+        Line l3 = Line(p3.x, p3.y, p4.x, p4.y);
+        Line l4 = Line(p4.x, p4.y, p1.x, p1.y);
+        
+        for(int i2=minY; i2<maxY; i2++)
         {
-            double w1 = ((p2.y-p3.y)*(i-p3.x) + (p3.x-p2.x)*(i2-p3.y)) / detT;
-            double w2 = ((p3.y-p1.y)*(i-p3.x) + (p1.x-p3.x)*(i2-p3.y)) / detT;
-            double w3 = 1 - w1 - w2;
+            int minX, maxX;
+            double v = 0;
+
+            if(l1.getSlope() != 0)
+            {
+                v = (i2 - l1.getYInt()) / l1.getSlope();
+                minX = v;
+                maxX = v;
+            }
+            else
+            {
+                minX = l1.getMinX();
+                maxX = l1.getMaxX();
+            }
+
+            if(l2.getSlope() != 0)
+            {
+                v = (i2 - l2.getYInt()) / l2.getSlope();
+                minX = min(minX, v);
+                maxX = max(maxX, v);
+            }
+            else
+            {
+                minX = min(minX,l2.getMinX());
+                maxX = max(maxX,l2.getMaxX());
+            }
+
+            if(l3.getSlope() != 0)
+            {
+                v = (i2 - l3.getYInt()) / l3.getSlope();
+                minX = min(minX, v);
+                maxX = max(maxX, v);
+            }
+            else
+            {
+                minX = min(minX,l3.getMinX());
+                maxX = max(maxX,l3.getMaxX());
+            }
+
+            if(l4.getSlope() != 0)
+            {
+                v = (i2 - l4.getYInt()) / l4.getSlope();
+                minX = min(minX, v);
+                maxX = max(maxX, v);
+            }
+            else
+            {
+                minX = min(minX,l4.getMinX());
+                maxX = max(maxX,l4.getMaxX());
+            }
+
+            for(int i=minX; i<=maxX; i++)
+            {
+                double w1 = ((p2.y-p3.y)*(i-p3.x) + (p3.x-p2.x)*(i2-p3.y)) / detT;
+                double w2 = ((p3.y-p1.y)*(i-p3.x) + (p1.x-p3.x)*(i2-p3.y)) / detT;
+                double w3 = 1 - w1 - w2;
+                
+                Vec2f interpPoint = oP1*w1 + oP2*w2 + oP3*w3;
+                if(interpPoint.x < 0 || interpPoint.x > o->width)
+                    continue;
+                if(interpPoint.y < 0 || interpPoint.y > o->height)
+                    continue;
+                
+                Color c = o->getPixel((int)interpPoint.x, (int)interpPoint.y);
+                drawPixelSimple(i, i2, c);
+            }
             
-            Vec2f interpPoint = oP1*w1 + oP2*w2 + oP3*w3;
-            if(interpPoint.x < 0 || interpPoint.x > o->width)
-                continue;
-            if(interpPoint.y < 0 || interpPoint.y > o->height)
-                continue;
-            
-            Color c = o->getPixel((int)interpPoint.x, (int)interpPoint.y);
-            drawPixelSimple(i, i2, c);
         }
         
-    }
-    
-    /*
-    for(int i2=0; i2<height; i2++)
-    {
-        if(oY>=oHeight)
+        /*
+        for(int i2=0; i2<height; i2++)
         {
-            break;
-        }
-        
-        Vec2f prePoint = Vec2f(-1,-1);
-        oX = 0;
-        for(int i=0; i<width; i++)
-        {
-            if(oX>=oWidth)
+            if(oY>=oHeight)
             {
                 break;
             }
-
-            //double w1 = ((y2-y3)*(oX-x3) + (x3-x2)*(oY-y3)) / detT;
-            //double w2 = ((y3-y1)*(oX-x3) + (x1-x3)*(oY-y3)) / detT;
-            //double w3 = 1 - w1 - w2;
-
-            Vec2f finalPoint = p1*w1 + p2*w2 + p3*w3;
-
-            Color c = o->getPixel(oX, oY);
-            if(c.a != 0)
+            
+            Vec2f prePoint = Vec2f(-1,-1);
+            oX = 0;
+            for(int i=0; i<width; i++)
             {
-                if(finalPoint.x>=0 && finalPoint.x < width)
+                if(oX>=oWidth)
                 {
-                    if(finalPoint.y>=0 && finalPoint.y < height)
+                    break;
+                }
+
+                //double w1 = ((y2-y3)*(oX-x3) + (x3-x2)*(oY-y3)) / detT;
+                //double w2 = ((y3-y1)*(oX-x3) + (x1-x3)*(oY-y3)) / detT;
+                //double w3 = 1 - w1 - w2;
+
+                Vec2f finalPoint = p1*w1 + p2*w2 + p3*w3;
+
+                Color c = o->getPixel(oX, oY);
+                if(c.a != 0)
+                {
+                    if(finalPoint.x>=0 && finalPoint.x < width)
                     {
-                        //draw line to next point unless point is invalid
-                        if(prePoint.x>=0 && prePoint.y>=0)
+                        if(finalPoint.y>=0 && finalPoint.y < height)
                         {
-                            drawLine((int)prePoint.x, (int)prePoint.y, (int)finalPoint.x, (int)finalPoint.y, c);
+                            //draw line to next point unless point is invalid
+                            if(prePoint.x>=0 && prePoint.y>=0)
+                            {
+                                drawLine((int)prePoint.x, (int)prePoint.y, (int)finalPoint.x, (int)finalPoint.y, c);
+                            }
+                            else
+                            {
+                                drawPixelSimple((int)finalPoint.x, (int)finalPoint.y, c);
+                            }
+                            prePoint = finalPoint;
                         }
-                        else
-                        {
-                            drawPixelSimple((int)finalPoint.x, (int)finalPoint.y, c);
-                        }
-                        prePoint = finalPoint;
                     }
                 }
+                oX++;
             }
-            oX++;
+            oY++;
+
         }
-        oY++;
-
+        */
     }
-    */
-
 }
 
 Image* Image::loadBMP(std::string filename)

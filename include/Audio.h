@@ -1,11 +1,33 @@
 #pragma once
 #include <Windows.h>
 #include <vector>
+#include <thread>
+#include <iostream>
 
-struct Note
+struct RIFF_HEADER
 {
-    float frequency;
-    int time;
+    std::string chunkID;
+    int chunkSize;
+    std::string format;
+};
+
+struct FMT_HEADER
+{
+    std::string subchunkID;
+    int subchunkSize;
+    short audioFormat;
+    short numChannels;
+    int sampleRate;
+    int byteRate;
+    short blockAlign;
+    short bitsPerSample;
+};
+
+struct DATA_HEADER
+{
+    std::string subchunkID;
+    int subchunkSize;
+    std::vector<unsigned char> data;
 };
 
 class Audio
@@ -14,9 +36,28 @@ public:
     Audio();
     ~Audio();
 
-    void playAudio();
+    static void init();
 
-    static const
+    static void playAudio();
+    static void stopAudio();
+    static void setVolume(double value);
+    static double getVolume();
+    
+    static void dispose();
 private:
-    std::vector<Note> musicNotes;
+    static void CALLBACK waveCallBack(HWAVEOUT hWaveOut, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
+    static void loadWave(std::string filename);
+
+    static void submitData();
+    static void prepareData();
+    
+    static double volume;
+    static DATA_HEADER audioData;
+    static HWAVEOUT waveOutHandle;
+    static FMT_HEADER formatStuff;
+    static int loc;
+
+    static std::thread audioThread;
+    static bool running;
+    static bool playing;
 };

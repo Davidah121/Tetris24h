@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "Audio.h"
 
 Game* Game::currentGame = nullptr;
 Game::Game()
@@ -12,12 +13,15 @@ Game::Game()
     running = true;
 
     Input::init();
+    Audio::init();
     wnd->setKeyboardDownFunction(Input::setKeyDownFunction);
     wnd->setKeyboardUpFunction(Input::setKeyUpFunction);
 }
 
 Game::~Game()
 {
+    Game::clear();
+    Audio::dispose();
     std::cout << "CLOSED GAME" << std::endl;
     if(wnd!=nullptr)
         delete wnd;
@@ -120,6 +124,11 @@ void Game::removeGameObject(ParentGameObject* obj)
 void Game::closeGame()
 {
     running = false;
+}
+
+void Game::clear()
+{
+    gameObjects.clear();
 }
 
 void Game::update()

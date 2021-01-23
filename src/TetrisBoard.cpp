@@ -1,5 +1,6 @@
 #include "TetrisBoard.h"
 #include "Game.h"
+#include "AssetManager.h"
 
 TetrisBoard::TetrisBoard() : ParentGameObject()
 {
@@ -21,17 +22,6 @@ bool TetrisBoard::checkCollision(TetrisBlock b)
 
     bool col = false;
 
-    if(xLoc >= 10 || xLoc < 0)
-    {
-        return true;
-    }
-
-    if(yLoc >= 24 || yLoc < 0)
-    {
-        return true;
-    }
-
-
     for(int yv = yLoc; yv < yLoc+4; yv++)
     {
         for(int xv = xLoc; xv < xLoc+4; xv++)
@@ -43,6 +33,7 @@ bool TetrisBoard::checkCollision(TetrisBlock b)
                     col = true;
                     break;
                 }
+
                 if(yv >= 24 || yv < 0)
                 {
                     col = true;
@@ -55,6 +46,7 @@ bool TetrisBoard::checkCollision(TetrisBlock b)
                     break;
                 }
             }
+            index++;
         }
     }
 
@@ -71,27 +63,30 @@ void TetrisBoard::render()
 {
     Image* img = Game::getCurrentGame()->getGameImg();
     //vertical
-    for(int i=0; i<10; i++)
+    for(int i=0; i<11; i++)
     {
-        img->drawLine(x + i*16, y, x + i*16, y + 320, {0,0,0,255});
+        img->drawLine(x + i*16, y + 64, x + i*16, y + 320 + 64, {0,0,0,255});
     }
 
     //horizontal
-    for(int i=0; i<20; i++)
+    for(int i=0; i<21; i++)
     {
-        img->drawLine(x, y + i*16, x + 160, y + i*16, {0,0,0,255});
+        img->drawLine(x, y + 64 + i*16, x + 160, y + 64 + i*16, {0,0,0,255});
     }
 
-    for(int i=0; i<20; i++)
+    for(int i=0; i<24; i++)
     {
         for(int i2=0; i2<10; i2++)
         {
             BoardPiece p = boardArray[i2 + i*10];
 
             if(p.filled)
-                img->drawImage(x + i2*16, y + (320 - i*16), p.img);
+                img->drawImage(x + i2*16, y + i*16, p.img);
         }
     }
+
+    //game over area
+    img->drawRect(x, y, 160, 64, false, {128,0,0,64});
 }
 
 void TetrisBoard::addPiece(TetrisBlock b)
@@ -111,14 +106,18 @@ void TetrisBoard::addPiece(TetrisBlock b)
                 this->boardArray[xv + yv*10].filled = true;
                 this->boardArray[xv + yv*10].img = b.getImagePointer();
             }
+            index++;
         }
     }
+
+    clearLines();
+    checkIfFailed();
 }
 
 void TetrisBoard::clearLines()
 {
     bool canClear = true;
-    for(int y=23; y>=0; y--)
+    for(int y=0; y<24; y++)
     {
         canClear = true;
         for(int x=0; x<10; x++)
@@ -137,8 +136,7 @@ void TetrisBoard::clearLines()
                 boardArray[x + y*10].filled = false;
                 boardArray[x + y*10].img = nullptr;
             }
-            
-            for(int y2=y+1; y2<24; y2++)
+            for(int y2=y; y2>0; y2--)
             {
                 for(int x=0; x<10; x++)
                 {
@@ -177,7 +175,7 @@ bool TetrisBoard::getFailed()
 
 void TetrisBoard::checkIfFailed()
 {
-    for(int y=20; y<24; y++)
+    for(int y=0; y<4; y++)
     {
         for(int x=0; x<10; x++)
         {

@@ -1,10 +1,15 @@
 #include "Player.h"
 #include "Input.h"
 #include "Game.h"
+#include "AssetManager.h"
 
 Player::Player(unsigned char controlScheme, int controllerID) : ParentGameObject()
 {
     board = new TetrisBoard();
+
+    board->setX(x);
+    board->setY(y);
+
     Game::getCurrentGame()->addGameObject(board);
 
     this->controlScheme = controlScheme;
@@ -15,8 +20,19 @@ Player::~Player()
 {
 }
 
+void Player::init()
+{
+    addPiece();
+    getPiece();
+}
+
 void Player::update()
 {
+    if(board->getFailed())
+    {
+        return;
+    }
+
     if(currentPiece!=nullptr)
     {
         if(controlScheme==KEYBOARD)
@@ -64,7 +80,7 @@ void Player::update()
                 //right arrow
                 moveRight();
             }
-            else if(Input::getJoystickPressed(controllerID, Input::DOWN_DPAD))
+            else if(Input::getJoystickDown(controllerID, Input::DOWN_DPAD))
             {
                 //down arrow
                 moveDown();
@@ -90,36 +106,56 @@ void Player::update()
 
 void Player::moveLeft()
 {
-    currentPiece->moveLeft();
-    if(board->checkCollision(*currentPiece))
-        currentPiece->moveRight();
+    if(currentPiece!=nullptr)
+    {
+        currentPiece->moveLeft();
+        if(board->checkCollision(*currentPiece))
+            currentPiece->moveRight();
+    }
 }
 void Player::moveRight()
 {
-    currentPiece->moveRight();
-    if(board->checkCollision(*currentPiece))
-        currentPiece->moveLeft();
+    if(currentPiece!=nullptr)
+    {
+        currentPiece->moveRight();
+        if(board->checkCollision(*currentPiece))
+            currentPiece->moveLeft();
+    }
 }
 void Player::moveDown()
 {
-    currentPiece->moveDown();
-    if(board->checkCollision(*currentPiece))
+    if(currentPiece!=nullptr)
     {
-        board->addPiece(*currentPiece);
-        getPiece();
+        currentPiece->moveDown();
+        if(board->checkCollision(*currentPiece))
+        {
+            currentPiece->moveUp();
+            board->addPiece(*currentPiece);
+
+            Game::getCurrentGame()->removeGameObject(currentPiece);
+            delete currentPiece;
+
+            getPiece();
+        }
     }
 }
 void Player::rotateClock()
 {
-    currentPiece->rotateClockwise();
-    if(board->checkCollision(*currentPiece))
-        currentPiece->rotateCounterClockwise();
+    if(currentPiece!=nullptr)
+    {
+        currentPiece->rotateClockwise();
+        if(board->checkCollision(*currentPiece))
+            currentPiece->rotateCounterClockwise();
+    }
 }
 void Player::rotateCounterClock()
 {
-    currentPiece->rotateCounterClockwise();
-    if(board->checkCollision(*currentPiece))
-        currentPiece->rotateClockwise();
+    if(currentPiece!=nullptr)
+    {
+        currentPiece->rotateCounterClockwise();
+        if(board->checkCollision(*currentPiece))
+            currentPiece->rotateClockwise();
+    }
 }
 void Player::hold()
 {
@@ -128,20 +164,78 @@ void Player::hold()
         TetrisBlock* temp = holdPiece;
         holdPiece = currentPiece;
         currentPiece = temp;
+
+        currentPiece->setX( holdPiece->getX());
+        currentPiece->setY( holdPiece->getY());
+
+        currentPiece->setRenderStartX(board->getX());
+        currentPiece->setRenderStartY(board->getY());
+
+        holdPiece->setX(0);
+        holdPiece->setY(0);
     }
     else
     {
         holdPiece = currentPiece;
+        getPiece();
+
+        currentPiece->setX( holdPiece->getX());
+        currentPiece->setY( holdPiece->getY());
+
+        currentPiece->setRenderStartX(board->getX());
+        currentPiece->setRenderStartY(board->getY());
+
+        holdPiece->setX(0);
+        holdPiece->setY(0);
     }
 }
 
 void Player::render()
 {
+    Image* gameImg = Game::getCurrentGame()->getGameImg();
+    
+    Image* imgText = nullptr;
+    if(won==true)
+    {
+        imgText = AssetManager::getAssetManager()->getAsset("winText");
+    }
+    else if (lose==true)
+    {
+        imgText = AssetManager::getAssetManager()->getAsset("loseText");
+    }
 
+    if(imgText!=nullptr)
+    {
+        gameImg->drawImage(x, y, imgText);
+    }
+
+    if(holdPiece!=nullptr)
+    {
+        holdPiece->setRenderStartX(x + 320);
+        holdPiece->setRenderStartY(y);
+
+        holdPiece->render();
+    }
+
+}
+
+void Player::setWin()
+{
+    won = true;
+}
+
+void Player::setLose()
+{
+    lose = true;
 }
 
 void Player::getPiece()
 {
+    currentPiece = blockQueue.front();
+    currentPiece->setRenderStartX( board->getX() );
+    currentPiece->setRenderStartY( board->getY() );
+    
+    Game::getCurrentGame()->addGameObject( blockQueue.front() );
     blockQueue.pop();
     addPiece();
 }
@@ -153,9 +247,11 @@ void Player::addPiece()
     do
     {
         value = lcg.get() % 7;
-    } while (value!=lastBlockAdded);
+    } while (value==lastBlockAdded);
+
+    lastBlockAdded = value;
     
-    blockQueue.push(TetrisBlock(value));
+    blockQueue.push(new TetrisBlock(value));
 }
 
 TetrisBoard* Player::getBoard()

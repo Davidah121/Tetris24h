@@ -13,6 +13,8 @@ public:
     Player(unsigned char controlScheme, int controllerID);
     ~Player();
 
+    void init();
+
     void update();
     void render();
 
@@ -23,6 +25,8 @@ public:
 
     void setLCG(LCG lcg);
 
+    void setWin();
+    void setLose();
 private:
     void moveLeft();
     void moveRight();
@@ -33,13 +37,19 @@ private:
     void getPiece();
     void addPiece();
     unsigned char controlScheme = KEYBOARD;
-    TetrisBoard* board;
-    TetrisBlock* currentPiece;
-    TetrisBlock* holdPiece;
+    TetrisBoard* board = nullptr;
+    TetrisBlock* currentPiece = nullptr;
+    TetrisBlock* holdPiece = nullptr;
     int controllerID = 0;
     LCG lcg;
 
-    std::queue<TetrisBlock> blockQueue;
+    bool won = false;
+    bool lose = false;
+
+    int x = 0;
+    int y = 0;
+
+    std::queue<TetrisBlock*> blockQueue;
 
     int lastBlockAdded = 0;
 };
