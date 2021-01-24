@@ -1,9 +1,11 @@
 #include "Game.h"
 #include "Audio.h"
+#include "MenuController.h"
 
 Game* Game::currentGame = nullptr;
 Game::Game()
 {
+    srand( (int)System::getNanoTime() );
     wnd = new Window(640, 480, "TETRIS_24HR");
     currentFPS = 0;
     targetFPS = 60;
@@ -22,7 +24,6 @@ Game::~Game()
 {
     Game::clear();
     Audio::dispose();
-    std::cout << "CLOSED GAME" << std::endl;
     if(wnd!=nullptr)
         delete wnd;
     if(gameImg!=nullptr)
@@ -124,6 +125,7 @@ void Game::removeGameObject(ParentGameObject* obj)
 void Game::closeGame()
 {
     running = false;
+    clear();
 }
 
 void Game::clear()

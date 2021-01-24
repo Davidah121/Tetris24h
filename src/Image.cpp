@@ -364,14 +364,17 @@ void Image::drawImage(int x, int y, Image* o)
         int endX = System::clamp<int>(startX + o->width, 0, this->width);
         int endY = System::clamp<int>(startY + o->height, 0, this->height);
 
-        int oX = 0;
-        int oY = 0;
-        for(int i2=startY, oY=0; i2<endY; i2++, oY++)
+        int oX = startX-x;
+        int oY = startY-y;
+        for(int i2=startY, oY=startY-y; i2<endY; i2++, oY++)
         {
-            for(int i=startX, oX=0; i<endX; i++, oX++)
+            for(int i=startX, oX=startX-x; i<endX; i++, oX++)
             {
-                Color c = o->getPixel(oX, oY);
-                drawPixelSimple(i, i2, c);
+                if(oX >= 0 && oY >= 0 && oX < o->width && oY < o->height)
+                {
+                    Color c = o->getPixel(oX, oY);
+                    drawPixelSimple(i, i2, c);
+                }
             }
         }
     }

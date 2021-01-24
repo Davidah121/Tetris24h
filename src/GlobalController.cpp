@@ -4,24 +4,35 @@
 GlobalController::GlobalController(int amountOfPlayers, int amountOfAI) : ParentGameObject()
 {
     this->amountOfPlayers = amountOfPlayers;
-    srand(NULL);
     LCG lcg = LCG(rand(), 48271, 571, 1<<31 );
 
     for(int i=0; i<amountOfPlayers; i++)
     {
-        Player* p = new Player(Player::GAME_CONTROLLER, i);
+        Player* p;
+        if(Input::getJoystickExists(i))
+        {
+            p = new Player(32 + i*320, 32, Player::GAME_CONTROLLER, i);
+        }
+        else
+        {
+            p = new Player(32 + i*320, 32, Player::KEYBOARD, -1);
+        }
         p->setLCG(lcg);
         p->init();
         Game::getCurrentGame()->addGameObject(p);
         players.push_back( p );
     }
 
-    timeTillMove = 30;
+    timeTillMove = 60;
 }
 
 GlobalController::~GlobalController()
 {
-
+    for(int i=0; i<players.size(); i++)
+    {
+        delete players[i];
+    }
+    players.clear();
 }
 
 bool GlobalController::getDone()
@@ -107,4 +118,5 @@ void GlobalController::incrementTimer()
 void GlobalController::incrementLevel()
 {
     timeTillMove = timeTillMove / 1.25;
+    amountTillNextLevel *= 1.25;
 }

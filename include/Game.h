@@ -18,7 +18,6 @@ public:
     void removeGameObject(ParentGameObject* obj);
 
     void closeGame();
-
     void clear();
 
     static Game* getCurrentGame();
@@ -30,6 +29,8 @@ private:
     int targetFPS;
     double deltaTime = 1.0;
     bool running;
+
+    bool cleared = false;
 
     void update();
     void render();

@@ -4,16 +4,25 @@
 
 #pragma comment(lib, "winmm.lib")
 
-double Audio::volume = 1.0;
+double Audio::volume = 0.5;
 DATA_HEADER Audio::audioData;
 FMT_HEADER Audio::formatStuff;
 HWAVEOUT Audio::waveOutHandle;
 
+unsigned char* Audio::buffer;
 int Audio::loc = 0;
 
+int Audio::bufferLen = 0;
+int Audio::buffers = 4;
+
 std::thread Audio::audioThread;
+std::mutex Audio::audioMutex;
 bool Audio::playing = false;
 bool Audio::running = false;
+
+audioHeaderThing Audio::headers[4];
+
+int Audio::callBackInc = 0;
 
 Audio::Audio()
 {
@@ -27,7 +36,6 @@ Audio::~Audio()
 
 void Audio::init()
 {
-    /*
     loadWave("Assets/TetrisTheme.wav");
 
     WAVEFORMATEX wfx;
@@ -38,42 +46,61 @@ void Audio::init()
     wfx.nChannels = Audio::formatStuff.numChannels;
     wfx.nAvgBytesPerSec = Audio::formatStuff.byteRate;
     wfx.nBlockAlign = Audio::formatStuff.blockAlign;
+    bufferLen = 1764*5;
+
+    buffer = new unsigned char[bufferLen*buffers];
+
+    ZeroMemory(buffer, bufferLen*buffers);
+
     
-    MMRESULT result = waveOutOpen(&waveOutHandle, WAVE_MAPPER, &wfx, NULL, NULL, CALLBACK_NULL);
+    MMRESULT result = waveOutOpen(&waveOutHandle, WAVE_MAPPER, &wfx, (DWORD_PTR)Audio::waveCallBack, NULL, CALLBACK_FUNCTION);
+
     if(result == MMSYSERR_NOERROR)
     {
         Audio::running = true;
         Audio::playing = false;
 
-        Audio::audioThread = std::thread(Audio::submitData);
+        Audio::audioThread = std::thread(Audio::prepareData);
     }
-    */
 }
 
 void Audio::dispose()
 {
+    setRunning(false);
     stopAudio();
-    /*
-    playing = false;
-    running = false;
+
+    waveOutUnprepareHeader(waveOutHandle, &(headers[loc].header), sizeof(WAVEHDR));
 
     if(Audio::audioThread.joinable())
         Audio::audioThread.join();
     
     waveOutClose(waveOutHandle);
-    */
 }
 
 void Audio::playAudio()
 {
-    PlaySoundW(L"Assets/TetrisTheme.wav", NULL, SND_ASYNC | SND_LOOP);
-    //playing = true;
+    //PlaySoundW(L"Assets/TetrisTheme.wav", NULL, SND_ASYNC | SND_LOOP);
+    Audio::audioMutex.lock();
+    playing = true;
+    Audio::audioMutex.unlock();
+    
 }
 
 void Audio::stopAudio()
 {
-    PlaySoundW(NULL, NULL, NULL);
-    //playing = false;
+    //PlaySoundW(NULL, NULL, NULL);
+    Audio::audioMutex.lock();
+    playing = false;
+    Audio::audioMutex.unlock();
+}
+
+bool Audio::getPlaying()
+{
+    bool b;
+    Audio::audioMutex.lock();
+    b = playing;
+    Audio::audioMutex.unlock();
+    return b;
 }
 
 void Audio::setVolume(double value)
@@ -86,22 +113,66 @@ double Audio::getVolume()
     return volume;
 }
 
-void Audio::submitData()
+bool Audio::getRunning()
 {
-    WAVEHDR header;
-    ZeroMemory(&header, sizeof(WAVEHDR));
-    header.dwBufferLength = ((Audio::formatStuff.bitsPerSample/8) * Audio::formatStuff.numChannels * Audio::formatStuff.sampleRate) / 1;
-    header.dwFlags = 0;
-    header.dwLoops = 0;
+    bool b;
+    Audio::audioMutex.lock();
+    b = running;
+    Audio::audioMutex.unlock();
+    return b;
+}
 
-    int index = loc;
-    unsigned char* lpData = new unsigned char[header.dwBufferLength];
+void Audio::setRunning(bool v)
+{
+    Audio::audioMutex.lock();
+    running = v;
+    Audio::audioMutex.unlock();
+}
 
-    while(running)
+void CALLBACK Audio::waveCallBack(HWAVEOUT hWaveOut, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2)
+{
+    if(uMsg == WOM_DONE)
+    {
+        headers[callBackInc].used = true;
+        //std::cout << callBackInc;
+        callBackInc++;
+        if(callBackInc>=buffers)
+        {
+            callBackInc = 0;
+        }
+    }
+}
+
+void Audio::prepareData()
+{
+    int index = 0;
+    for(int i=0; i<bufferLen*buffers; i+=2)
+    {
+        if(index>Audio::audioData.data.size())
+        {
+            index = 0;
+        }
+        short v = (Audio::audioData.data[index+1]<<8)  + Audio::audioData.data[index];
+        v = (short) v*Audio::getVolume();
+        buffer[i+1] = (v>>8) & 0xFF;
+        buffer[i] = (v) & 0xFF;
+        
+        index+=2;
+    }
+    
+    submitData((LPSTR)buffer);
+
+    loc++;
+    submitData((LPSTR)buffer + bufferLen);
+
+    loc = 0;
+    while(Audio::getRunning())
     {
         if(playing)
         {
-            for(int i=0; i<header.dwBufferLength; i+=2)
+            int start = bufferLen*loc;
+            int end = start+bufferLen;
+            for(int i=start; i<end; i+=2)
             {
                 if(index>Audio::audioData.data.size())
                 {
@@ -109,35 +180,53 @@ void Audio::submitData()
                 }
                 short v = (Audio::audioData.data[index+1]<<8)  + Audio::audioData.data[index];
                 v = (short) v*Audio::getVolume();
-                lpData[i+1] = (v>>8) & 0xFF;
-                lpData[i] = (v) & 0xFF;
+                buffer[i+1] = (v>>8) & 0xFF;
+                buffer[i] = (v) & 0xFF;
                 
                 index+=2;
             }
             
-            header.lpData = (LPSTR)lpData;
-
-            waveOutPrepareHeader(Audio::waveOutHandle, &header, sizeof(WAVEHDR));
-            MMRESULT wResult = waveOutWrite(Audio::waveOutHandle, &header, sizeof(WAVEHDR));
-
-            if(wResult != 0)
+            while(headers[loc].used==false)
             {
-                waveOutUnprepareHeader(Audio::waveOutHandle, &header, sizeof(WAVEHDR));
-                //error has occured
-                playing = false;
-                MessageBeep(NULL);
+                System::sleep(0, 1);
+                if(!playing)
+                {
+                    break;
+                }
             }
 
-            Sleep(10);
-            do {
-                
-            } while (!(header.dwFlags & WHDR_DONE));
-            waveOutUnprepareHeader(Audio::waveOutHandle, &header, sizeof(WAVEHDR));
+            headers[loc].used = false;
 
+            waveOutUnprepareHeader(waveOutHandle, &(headers[(loc)].header), sizeof(WAVEHDR));
+            submitData((LPSTR)buffer + (bufferLen*loc));
+
+            loc++;
+            if(loc>=buffers)
+            {
+                loc = 0;
+            }
         }
 
     }
+}
 
+void Audio::submitData(LPSTR buffer)
+{
+    ZeroMemory(&(headers[loc].header), sizeof(WAVEHDR));
+    headers[loc].header.dwBufferLength = bufferLen;
+    headers[loc].header.dwFlags = 0;
+    headers[loc].header.dwLoops = 0;
+    headers[loc].header.lpData = (LPSTR)buffer;
+
+    waveOutPrepareHeader(waveOutHandle, &(headers[loc].header), sizeof(WAVEHDR));
+    MMRESULT wResult = waveOutWrite(Audio::waveOutHandle, &(headers[loc].header), sizeof(WAVEHDR));
+    if(wResult != 0)
+    {
+        //error has occured
+        playing = false;
+        MessageBeep(NULL);
+        std::cout << "ERROR: " << (int) wResult << std::endl;
+    }   
 }
 
 void Audio::loadWave(std::string filename)

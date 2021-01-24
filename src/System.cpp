@@ -21,6 +21,16 @@ unsigned long System::getNanoTime()
     return std::chrono::high_resolution_clock::now().time_since_epoch().count();
 }
 
+void System::sleep(int milliseconds, int microseconds)
+{
+    unsigned long timeNeeded = (milliseconds * 1000 * 1000) + (microseconds*1000);
+    unsigned long startTime = System::getNanoTime();
+
+    while( (System::getNanoTime() - startTime) < timeNeeded)
+    {
+        
+    }
+}
 double System::roundToDecimal(double value, int decimals)
 {
     double finalValue = value;

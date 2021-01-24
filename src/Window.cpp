@@ -19,7 +19,6 @@ LRESULT __stdcall Window::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             mainWindow->paintFunction();
             break;
         case WM_CLOSE:
-            std::cout << "CLOSED WINDOW" << std::endl;
             mainWindow->setRunning(false);
             break;
         default:
@@ -132,10 +131,11 @@ void Window::run()
         MSG message;
         memset(&message, 0, sizeof(MSG));
 
-        PeekMessage(&message, NULL, NULL, NULL, PM_REMOVE);
-        
-        TranslateMessage(&message);
-        DispatchMessage(&message);
+        while(PeekMessage(&message, NULL, NULL, NULL, PM_REMOVE))
+        {
+            TranslateMessage(&message);
+            DispatchMessage(&message);
+        }
     }
 }
 

@@ -53,14 +53,19 @@ public:
 
     static void setJoystickButton(int id, unsigned char c, bool value);
 
+    static void denyInputs();
 private:
-    static bool keyboardDown[255];
-    static bool keyboardUp[255];
-    static bool keyboardPressed[255];
+    static bool keyboardDown[256];
+    static bool keyboardUp[256];
+    static bool keyboardPressed[256];
+
+    static bool nextKeyboard[256];
 
     static bool joysticks[4];
     static bool joysticksDown[4][15];
     static bool joysticksUp[4][15];
     static bool joysticksPressed[4][15];
     static Vec2f joystickAxis[4][3];
+
+    static bool deny;
 };

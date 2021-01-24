@@ -10,7 +10,7 @@ public:
     static const unsigned char GAME_CONTROLLER = 1;
     static const unsigned char KEYBOARD = 0;
 
-    Player(unsigned char controlScheme, int controllerID);
+    Player(int x, int y, unsigned char controlScheme, int controllerID);
     ~Player();
 
     void init();
@@ -27,6 +27,7 @@ public:
 
     void setWin();
     void setLose();
+    
 private:
     void moveLeft();
     void moveRight();

@@ -24,5 +24,7 @@ public:
         return value;
     }
 
+    static void sleep(int milliseconds, int microseconds);
+
     static double roundToDecimal(double value, int decimals);
 };

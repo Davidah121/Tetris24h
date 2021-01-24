@@ -10,11 +10,27 @@
 MenuController::MenuController() : ParentGameObject()
 {
     this->depth = -1000;
+    
+    lcg = LCG(rand(), 12354, 1, 1<<31 );
+
+    for(int i=0; i<4; i++)
+    {
+        backgroundBlocks[i] = nullptr;
+    }
+
+    nextBlock = lcg.get() % 7;
+
     Audio::playAudio();
 }
 
 MenuController::~MenuController()
 {
+    for(int i=0; i<4; i++)
+    {
+        if(backgroundBlocks[i] != nullptr)
+            delete backgroundBlocks[i];
+    }
+
     Audio::stopAudio();
 }
 
@@ -29,12 +45,14 @@ void MenuController::update()
 
         if(timeWaited >= timeToWait)
         {
-            menuNumber = TITLEMENU;
+            //Game::getCurrentGame()->restart();
             Game::getCurrentGame()->clear();
-            Game::getCurrentGame()->addGameObject( (ParentGameObject*)this);
-
+            Game::getCurrentGame()->addGameObject(this);
+            
             delete gc;
+            timeWaited = 0;
             gc = nullptr;
+            menuNumber = TITLEMENU;
         }
     }
 
@@ -42,6 +60,48 @@ void MenuController::update()
     {
         return;
     }
+
+    moveTime++;
+    for(int i=0; i<4; i++)
+    {
+        if(backgroundBlocks[i]!=nullptr)
+        {
+            backgroundBlocks[i]->setY( backgroundBlocks[i]->getY()+1 );
+            if(moveTime >= moveTimeWait)
+            {
+                if(backgroundBlocks[i]->getY() > (480+16))
+                {
+                    delete backgroundBlocks[i];
+                    backgroundBlocks[i] = nullptr;
+                }
+            }
+        }
+        else
+        {
+            backgroundBlocks[i] = new TetrisBlock(nextBlock);
+
+            backgroundBlocks[i]->setX( 64 + i*128 );
+            backgroundBlocks[i]->setY( - ((lcg.get() % 256) + 64) );
+            nextBlock++;
+            if(nextBlock>=7)
+            {
+                nextBlock = 0;
+            }
+        }
+    }
+
+    if(moveTime >= moveTimeWait)
+    {
+        moveTime = 0;
+        timesMoved++;
+    }
+
+    if(timesMoved>4)
+    {
+        timesMoved = 0;
+        nextBlock = lcg.get() % 7;
+    }
+
 
     if(Input::getJoystickPressed(0, Input::A_BUTTON) || Input::getKeyPressed('A'))
     {
@@ -83,11 +143,18 @@ void MenuController::update()
                     break;
                 case 1:
                     //2 Players button
-                    menuNumber = -1;
-                    selection = 0;
-
-                    gc = new GlobalController(2, 0);
-                    Game::getCurrentGame()->addGameObject( gc );
+                    if(Input::getJoystickExists(0))
+                    {
+                        menuNumber = -1;
+                        selection = 0;
+                        
+                        gc = new GlobalController(2, 0);
+                        Game::getCurrentGame()->addGameObject( gc );
+                    }
+                    else
+                    {
+                        selection = 0;
+                    }
                     break;
                 default:
                     break;
@@ -165,6 +232,16 @@ void MenuController::render()
     Image* renderSurf = Game::getCurrentGame()->getGameImg();
 
     renderSurf->drawImage(0, 0, backgroundImage);
+
+    //draw 4 tetris pieces falling in the background at random x values
+    if(menuNumber>=0)
+    {
+        for(int i=0; i<4; i++)
+        {
+            if(backgroundBlocks[i]!=nullptr)
+                backgroundBlocks[i]->render();
+        }
+    }
 
     if(menuNumber>=0)
         renderSurf->drawImage(0, 0, titleText);

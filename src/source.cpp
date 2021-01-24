@@ -55,6 +55,5 @@ int main()
 {
     //testWindow();
     startGame();
-    std::cout<<"Hello world" << std::endl;
     return 0;
 }

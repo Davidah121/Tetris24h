@@ -3,9 +3,12 @@
 #include "Game.h"
 #include "AssetManager.h"
 
-Player::Player(unsigned char controlScheme, int controllerID) : ParentGameObject()
+Player::Player(int x, int y, unsigned char controlScheme, int controllerID) : ParentGameObject()
 {
     board = new TetrisBoard();
+
+    this->x = x;
+    this->y = y;
 
     board->setX(x);
     board->setY(y);
@@ -14,10 +17,17 @@ Player::Player(unsigned char controlScheme, int controllerID) : ParentGameObject
 
     this->controlScheme = controlScheme;
     this->controllerID = controllerID;
+
+    depth = 100;
 }
 
 Player::~Player()
 {
+    delete board;
+    if(currentPiece!=nullptr)
+        delete currentPiece;
+    if(holdPiece!=nullptr)
+        delete holdPiece;
 }
 
 void Player::init()
@@ -29,6 +39,16 @@ void Player::init()
 void Player::update()
 {
     if(board->getFailed())
+    {
+        return;
+    }
+
+    if(won)
+    {
+        return;
+    }
+
+    if(lose)
     {
         return;
     }
@@ -47,7 +67,7 @@ void Player::update()
                 //right arrow
                 moveRight();
             }
-            else if(Input::getKeyPressed(0x28))
+            else if(Input::getKeyDown(0x28))
             {
                 //down arrow
                 moveDown();
@@ -159,34 +179,54 @@ void Player::rotateCounterClock()
 }
 void Player::hold()
 {
-    if(holdPiece!=nullptr)
+    if(currentPiece!=nullptr)
     {
-        TetrisBlock* temp = holdPiece;
-        holdPiece = currentPiece;
-        currentPiece = temp;
+        if(holdPiece!=nullptr)
+        {
+            TetrisBlock* temp = holdPiece;
+            holdPiece = currentPiece;
+            currentPiece = temp;
 
-        currentPiece->setX( holdPiece->getX());
-        currentPiece->setY( holdPiece->getY());
+            currentPiece->setX( holdPiece->getX());
+            currentPiece->setY( holdPiece->getY());
 
-        currentPiece->setRenderStartX(board->getX());
-        currentPiece->setRenderStartY(board->getY());
+            currentPiece->setRenderStartX(0);
+            currentPiece->setRenderStartY(0);
 
-        holdPiece->setX(0);
-        holdPiece->setY(0);
-    }
-    else
-    {
-        holdPiece = currentPiece;
-        getPiece();
+            holdPiece->setX(0);
+            holdPiece->setY(0);
+        }
+        else
+        {
+            holdPiece = currentPiece;
+            getPiece();
 
-        currentPiece->setX( holdPiece->getX());
-        currentPiece->setY( holdPiece->getY());
+            currentPiece->setX( holdPiece->getX());
+            currentPiece->setY( holdPiece->getY());
 
-        currentPiece->setRenderStartX(board->getX());
-        currentPiece->setRenderStartY(board->getY());
+            currentPiece->setRenderStartX(0);
+            currentPiece->setRenderStartY(0);
 
-        holdPiece->setX(0);
-        holdPiece->setY(0);
+            holdPiece->setX(0);
+            holdPiece->setY(0);
+        }
+
+        if(board->checkCollision(*currentPiece))
+        {
+            //revert
+            TetrisBlock* temp = holdPiece;
+            holdPiece = currentPiece;
+            currentPiece = temp;
+
+            currentPiece->setX( holdPiece->getX());
+            currentPiece->setY( holdPiece->getY());
+
+            currentPiece->setRenderStartX(0);
+            currentPiece->setRenderStartY(0);
+
+            holdPiece->setX(0);
+            holdPiece->setY(0);
+        }
     }
 }
 
@@ -211,10 +251,15 @@ void Player::render()
 
     if(holdPiece!=nullptr)
     {
-        holdPiece->setRenderStartX(x + 320);
+        holdPiece->setRenderStartX(x + 192);
         holdPiece->setRenderStartY(y);
 
         holdPiece->render();
+    }
+
+    if(currentPiece!=nullptr)
+    {
+        currentPiece->render();
     }
 
 }
@@ -231,11 +276,15 @@ void Player::setLose()
 
 void Player::getPiece()
 {
+    if(board->getFailed())
+    {
+        currentPiece = nullptr;
+        return;
+    }
     currentPiece = blockQueue.front();
-    currentPiece->setRenderStartX( board->getX() );
-    currentPiece->setRenderStartY( board->getY() );
+    currentPiece->setX( board->getX() + 80);
+    currentPiece->setY( board->getY());
     
-    Game::getCurrentGame()->addGameObject( blockQueue.front() );
     blockQueue.pop();
     addPiece();
 }
@@ -251,7 +300,12 @@ void Player::addPiece()
 
     lastBlockAdded = value;
     
-    blockQueue.push(new TetrisBlock(value));
+    TetrisBlock* c = new TetrisBlock(value);
+
+    c->setX( board->getX() + 80);
+    c->setX( board->getY());
+    
+    blockQueue.push(c);
 }
 
 TetrisBoard* Player::getBoard()

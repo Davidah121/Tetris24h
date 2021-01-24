@@ -2,6 +2,7 @@
 #include <Windows.h>
 #include <vector>
 #include <thread>
+#include <mutex>
 #include <iostream>
 
 struct RIFF_HEADER
@@ -30,6 +31,12 @@ struct DATA_HEADER
     std::vector<unsigned char> data;
 };
 
+struct audioHeaderThing
+{
+    WAVEHDR header;
+    bool used;
+};
+
 class Audio
 {
 public:
@@ -48,16 +55,31 @@ private:
     static void CALLBACK waveCallBack(HWAVEOUT hWaveOut, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
     static void loadWave(std::string filename);
 
-    static void submitData();
+    static void submitData(LPSTR buffer);
     static void prepareData();
+
+    static bool getRunning();
+    static void setRunning(bool v);
     
+    static bool getPlaying();
+
     static double volume;
     static DATA_HEADER audioData;
     static HWAVEOUT waveOutHandle;
     static FMT_HEADER formatStuff;
+
+    static unsigned char* buffer;
+
+    static int bufferLen;
     static int loc;
+    static int buffers;
+
+    static audioHeaderThing headers[4];
+
+    static int callBackInc;
 
     static std::thread audioThread;
+    static std::mutex audioMutex;
     static bool running;
     static bool playing;
 };

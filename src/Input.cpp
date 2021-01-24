@@ -1,14 +1,16 @@
 #include "Input.h"
 #include <iostream>
 
-bool Input::keyboardDown[255];
-bool Input::keyboardUp[255];
-bool Input::keyboardPressed[255];
+bool Input::keyboardDown[256];
+bool Input::keyboardUp[256];
+bool Input::keyboardPressed[256];
 bool Input::joysticks[4];
 bool Input::joysticksDown[4][15];
 bool Input::joysticksUp[4][15];
 bool Input::joysticksPressed[4][15];
 Vec2f Input::joystickAxis[4][3];
+
+bool Input::nextKeyboard[256];
 
 Input::Input()
 {
@@ -73,18 +75,37 @@ bool Input::getJoystickExists(int id)
 void Input::update()
 {
     //update keyboards
-    for(int i=0; i<255; i++)
+    for(int i=0; i<256; i++)
     {
-        if(keyboardUp[i])
+        if(nextKeyboard[i])
         {
-            keyboardDown[i] = false;
-            keyboardPressed[i] = false;
-            keyboardUp[i] = false;
+            if(keyboardDown[i]==false)
+            {
+                keyboardDown[i] = true;
+                keyboardPressed[i] = true;
+                keyboardUp[i] = false;
+            }
+            else
+            {
+                keyboardDown[i] = true;
+                keyboardPressed[i] = false;
+                keyboardUp[i] = false;
+            }
         }
-        if(keyboardDown[i])
+        else
         {
-            keyboardPressed[i] = false;
-            keyboardUp[i] = false;
+            if(keyboardDown[i]==true)
+            {
+                keyboardDown[i] = false;
+                keyboardPressed[i] = false;
+                keyboardUp[i] = true;
+            }
+            else
+            {
+                keyboardDown[i] = false;
+                keyboardPressed[i] = false;
+                keyboardUp[i] = false;
+            }
         }
     }
 
@@ -96,22 +117,12 @@ void Input::update()
 
 void Input::setKeyDownFunction(unsigned char c)
 {
-    if(keyboardDown[c] == false)
-    {
-        keyboardPressed[c] = true;
-    }
-    keyboardDown[c] = true;
-    keyboardUp[c] = false;
+    nextKeyboard[c] = true;
 }
 
 void Input::setKeyUpFunction(unsigned char c)
 {
-    if(keyboardDown[c] == true)
-    {
-        keyboardDown[c] = false;
-        keyboardPressed[c] = false;
-        keyboardUp[c] = true;
-    }
+    nextKeyboard[c] = false;
 }
 
 void Input::setJoystickButton(int id, unsigned char c, bool value)
